@@ -1,6 +1,5 @@
 class UserAuthenticator
-  class AuthenticationError < StandardError
-  end
+  class AuthenticationError < StandardError; end
 
   attr_reader :user
 
@@ -15,9 +14,10 @@ class UserAuthenticator
     )
     res = client.exchange_code_for_token(code)
 
-    if res[:error].present?
+    if res.try(:error).present?
       raise AuthenticationError
     else
+      # ???
     end
   end
 
