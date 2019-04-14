@@ -3,15 +3,7 @@ class AccessTokensController < ApplicationController
   def create
     authenticator = UserAuthenticator.new(params[:code])
     authenticator.perform
-  end
 
-  def authentication_error
-    error = {
-        'status' => '401',
-        'source' => {"pointer": '/code'},
-        'title' => 'Authentication code is invalid',
-        'detail' => 'You must provide valid code in order to exchange it for token.'
-    }
-    render json: {"errors": [error]}, status: 401
+    render json: authenticator.access_token, status: :created
   end
 end
