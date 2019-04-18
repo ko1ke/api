@@ -2,7 +2,7 @@ require 'rails_helper'
 
 describe ArticlesController do
   describe '#index' do
-    subject { get :index }
+    subject {get :index}
 
     it 'should return success response' do
       subject
@@ -14,10 +14,10 @@ describe ArticlesController do
       subject
       Article.recent.each_with_index do |article, index|
         expect(json_data[index]['attributes']).to eq({
-          "title" => article.title,
-          "content" => article.content,
-          "slug" => article.slug
-        })
+                                                       "title" => article.title,
+                                                       "content" => article.content,
+                                                       "slug" => article.slug
+                                                     })
       end
     end
 
@@ -31,7 +31,7 @@ describe ArticlesController do
 
     it 'should paginate results' do
       create_list :article, 3
-      get :index, params: { page: 2, per_page: 1 }
+      get :index, params: {page: 2, per_page: 1}
       expect(json_data.length).to eq 1
       expected_article = Article.recent.second.id.to_s
       expect(json_data.first['id']).to eq(expected_article)
@@ -39,8 +39,8 @@ describe ArticlesController do
   end
 
   describe '#show' do
-    let(:article) { create :article }
-    subject { get :show, params: { id: article.id } }
+    let(:article) {create :article}
+    subject {get :show, params: {id: article.id}}
 
     it 'should return success response' do
       subject
@@ -49,28 +49,63 @@ describe ArticlesController do
 
     it 'should return proper json' do
       subject
-      expect(json_data['attributes']).to eq({
-          "title" => article.title,
-          "content" => article.content,
-          "slug" => article.slug
-      })
+      expect(json_data['attributes'])
+        .to eq({"title" => article.title,
+                "content" => article.content,
+                "slug" => article.slug
+               })
     end
   end
 
   describe '#create' do
-    subject { post :create }
+    subject {post :create}
 
     context 'when no code provided' do
       it_behaves_like 'forbidden_requests'
     end
 
     context 'when invalid code provided' do
-      before { request.headers['authorization'] = 'Invalid token' }
+      before {request.headers['authorization'] = 'Invalid token'}
       it_behaves_like 'forbidden_requests'
     end
 
-    context 'when invalid parameters provided' do
+    context 'when authorized' do
+      let(:access_token) {create :access_token}
+      before {request.headers['authorization'] = "Bearer #{access_token.token}"}
 
+      context 'when invalid parameters provided' do
+        let(:invalid_attributes) do
+          {
+            data: {
+              attributes: {
+                title: '',
+                content: ''
+              }
+            }
+          }
+        end
+
+        subject {post :create, params: invalid_attributes}
+        it 'should return 422 status code' do
+          subject
+          expect(response).to have_http_status(:unprocessable_entity)
+        end
+
+        it 'should return proper error json' do
+          subject
+          expect(json['errors']).to include({
+                                              "source" => {"pointer" => "/data/attributes/title"},
+                                              "detail" => "can't be blank"},
+                                            {
+                                              "source" => {"pointer" => "/data/attributes/content"},
+                                              "detail" => "can't be blank"
+                                            }, {
+                                              "source" => {"pointer" => "/data/attributes/slug"},
+                                              "detail" => "can't be blank"
+                                            }
+                                    )
+        end
+      end
     end
   end
 end
