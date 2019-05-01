@@ -2,7 +2,7 @@ class UserAuthenticator::Standard < UserAuthenticator
   class AuthenticationError < StandardError;
   end
 
-  attr_accessor :user, :access_token
+  attr_accessor :user
 
   def initialize(login, password)
     @login = login
